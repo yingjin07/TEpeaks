@@ -447,7 +447,8 @@ int run_narrow_TEpeaks_all(opt_t &options)
     
     treat->clean_m();
     control->clean_m();
-        
+    
+    info("#4 Call peaks for repetitive regions...");
     run_EM_TEpeaks(options,treat,control,options.CandidatePeakfile);
            // filter out low FE peaks
     //peakdetect.peaks.filter_fc( fc_low = options.fecutoff );

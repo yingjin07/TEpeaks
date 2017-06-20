@@ -148,6 +148,12 @@ std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::ve
     int  p, pre_p, pileup;
     
     std::vector<int> start_poss, end_poss;
+    std::vector<int> ret_p; //(2*lx,0);
+    std::vector<double> ret_v; //( 2 * lx, 0.0 );
+    if (plus_tags.size() == 0)
+    {
+        return  std::pair<std::vector<int>,std::vector<double> >(ret_p,ret_v);;
+    }
     
     //pointers are used for numpy arrays
    // int * start_poss_ptr;
@@ -182,8 +188,6 @@ std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::ve
    // start_poss_ptr = <int32_t *> start_poss.data
    // end_poss_ptr = <int32_t *> end_poss.data
 
-    std::vector<int> ret_p; //(2*lx,0);
-    std::vector<double> ret_v; //( 2 * lx, 0.0 );
 
     int lx = start_poss.size();
    // ret_p_ptr = <int32_t *> ret_p.data
@@ -201,10 +205,6 @@ std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::ve
 
     pileup = 0;
     
-    if (start_poss.size() == 0)
-    {
-        return  std::pair<std::vector<int>,std::vector<double> >(ret_p,ret_v);;
-    }
     
 
     

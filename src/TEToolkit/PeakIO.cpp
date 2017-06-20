@@ -398,7 +398,7 @@ void PeakIO::write_candidate_to_bed (std::string fname)
     int i=0;
     for (auto p : peaks ){
         std::map<double,std::vector<PeakContent> > ptlist_sortBy_end;
-        debug("num of candidate peaks " + std::to_string(p.second.size()));
+        //debug("num of candidate peaks " + std::to_string(p.second.size()));
         
         for (auto pt : p.second) {
             //debug(std::to_string(i) + " pt.end " + std::to_string(pt.end));

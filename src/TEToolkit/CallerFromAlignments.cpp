@@ -477,7 +477,7 @@ void CallerFromAlignments::__cal_pvalue_qvalue_table ()
 
     info( "#4 Start to calculate pvalue stat..." );
 
-    int N = 0;
+    long N = 0;
     std::vector<double> keys;
     
     for(size_t i =0; i< chromosomes.size(); i++ )
@@ -513,8 +513,6 @@ void CallerFromAlignments::__cal_pvalue_qvalue_table ()
         
     }
     
-    
-    //logging.debug ( "make pvalue_stat cost %.5f seconds" % t )
     //logging.debug ( "calculate pvalue/access hash for %d times" % nhcal )
     //logging.debug ( "access hash for %d times" % nhcal )
     //nhval = 0;
@@ -546,6 +544,7 @@ void CallerFromAlignments::__cal_pvalue_qvalue_table ()
         int l = pvalue_stat[key];
         
         double q = v + (log10(k) + f);
+     //   debug("N = " + std::to_string(N) + " k " + std::to_string(k) + " f = " + std::to_string(f) +" pval " + std::to_string(v) + " qval " + std::to_string(q));
         q = std::max(0.0,std::min(pre_q,q)); //           # make q-score monotonic
         if (pqtable.find(rounded_up) == pqtable.end()) {
             pqtable.insert(std::pair<int,double>(rounded_up,q));
@@ -558,7 +557,7 @@ void CallerFromAlignments::__cal_pvalue_qvalue_table ()
         //nhcal += 1;
     }
     
-/*    try{
+    try{
         std::ofstream f("test_pqtable.txt",std::ofstream::out);
         //    cPickle.dump( chr_pos_treat_ctrl, f , protocol=2 );
         for(auto k : pqtable){
@@ -571,12 +570,7 @@ void CallerFromAlignments::__cal_pvalue_qvalue_table ()
     catch(std::ofstream::failure e){
         // fail to write then remove the key in pileup_data_files
         this->pileup_data_files.erase(chrom);
-    }*/
-
-    
-    
-    //logging.debug( "access pq hash for %d times" % nhcal )
-
+    }
 }
 
 void CallerFromAlignments::call_peaks ( PeakIO *peaks, std::vector<std::string> scoring_function_symbols, std::vector<double> score_cutoff_s, bool uniqOnly, int min_length , int max_gap , bool call_summits , bool auto_cutoff )

@@ -111,7 +111,8 @@ void ShortRead::append_shortreads(ShortRead *other)
     this->total += other->total;
     this->total_uniq += other->total_uniq;
     this->length += other->length;
-    
+    this->total_multi += other->total_multi;
+
     average_template_length = (int)this->length/this->total_uniq;
     
     int strand = 0;

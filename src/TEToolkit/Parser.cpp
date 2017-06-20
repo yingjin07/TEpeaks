@@ -315,6 +315,19 @@ void process_aligned_fragment(global_context_t<T> * global_context, thread_conte
             
             for (size_t i = alignement_cnt; i < read_pair->second_reads.size(); i++) {
                 
+                read_t algn2;
+                read_t algn1;
+                
+                algn2.chrom = "";
+                algn2.start = -1;
+                algn2.end = -1;
+                algn2.strand = ".";
+                
+                algn1.chrom = "";
+                algn1.start = -1;
+                algn1.end = -1;
+                algn1.strand = ".";
+                
                 cur_read2 = (bam1_t *)read_pair->second_reads[i];
                 
                 if((size_t)cur_read2->core.tid >= global_context->refnames.size()){
@@ -330,6 +343,10 @@ void process_aligned_fragment(global_context_t<T> * global_context, thread_conte
                 algn2.strand =  IS_REVERSE(cur_read2) ? "-" : "+";
                 
                 bam_destroy1(cur_read2);
+                
+                if (algn1.chrom != "" || algn2.chrom != "") {
+                    multi_aligments.push_back(std::pair<read_t, read_t> (algn1,algn2));
+                }
 
             }
             
