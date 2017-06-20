@@ -11,8 +11,6 @@ method, bin correlation, and differential analysis. The differential
 analysis is performed using DESeq. 
 
 
-`Github Page <https://github.com/mhammell-laboratory/tepeak>`_
-
 `MHammell Lab <http://hammelllab.labsites.cshl.edu/software>`_
 
 Created by Ying Jin, Yuan Hao, Molly Hammell, June 2017
