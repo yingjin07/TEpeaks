@@ -59,7 +59,9 @@ void EMUpdate(std::vector<double> & means,std::vector<int> multiAlgn_To_multiRea
  *multi-alignments of one multi-read have consecutive ids.
  *multiAlgn_To_multiRead : multi-read -> last index of its multi-alignments
  *
+ * means: weight of multi_alignment
  */
+
 void EMestimate_read(std::vector<int> multiAlgn_To_multiRead,std::vector<int> multiAlgn_To_peakID,std::vector<double> & means,std::vector<double> peak_reads, std::vector<double> & peak_reads_Prime, int numItr,std::vector<int> effLengths)
 {
     //minimum weight
@@ -68,7 +70,6 @@ void EMestimate_read(std::vector<int> multiAlgn_To_multiRead,std::vector<int> mu
     double alpha_diff_cutoff = 0.01;
     double alpha_check_cutoff = 0.01;
     bool converged = false;
-    
     
     //std::vector<double> means(multiAlgn_weight.size(),0.0);
     std::vector<double> meansPrime(means.size(),0.0);
@@ -84,8 +85,7 @@ void EMestimate_read(std::vector<int> multiAlgn_To_multiRead,std::vector<int> mu
         }
 
        // debug("interation " + std::to_string(cur_iter));
-        
-        EMUpdate(means,multiAlgn_To_multiRead,multiAlgn_To_peakID,peak_reads_Prime,effLengths,meansPrime);
+    EMUpdate(means,multiAlgn_To_multiRead,multiAlgn_To_peakID,peak_reads_Prime,effLengths,meansPrime);
         
         converged = true;
         double maxRelDiff = -std::numeric_limits<double>::max();

@@ -163,6 +163,7 @@ int run_narrow_TEpeaks_all(opt_t &options)
     }
     
     options.CandidatePeakfile = options.data_outdir + "/" + options.project_name + "_candidatePeaks.txt";
+    //options.CandidatePeakfile = options.project_name + "_candidatePeaks.txt";
     
     std::string tag = "tag" ;
     
@@ -205,6 +206,9 @@ int run_narrow_TEpeaks_all(opt_t &options)
     int c1_u = c0_u;
     
     
+    info("#1 total " + tag + "s in treatment: " + lexical_cast<std::string>(t0));
+    int tm = treat->total_multi;
+    debug("#1 total multi " + lexical_cast<std::string>(tm));
     info("#1 total " + tag + "s in treatment: " + lexical_cast<std::string>(t0));
     info("#1 total unique " + tag + "s in treatment: " + lexical_cast<std::string>(t0_u));
     info("#1 total " + tag + "s in control: " + lexical_cast<std::string>(c0));
@@ -435,15 +439,14 @@ int run_narrow_TEpeaks_all(opt_t &options)
     //fclose(ofhd_summits);
     
     //peakdetect.peaks.write_to_narrowPeak(options);
-    
     // call potential peak regions
     info("#4 Call potential peak regions for repetitive regions...");
+   //peakdetect.peaks->set_CandidatePeakFile(options.CandidatePeakfile);
    peakdetect.candidate_peakregions();
     
     //FILE *ofhd = fopen( peak_fname, "w" );
     
     peakdetect.peaks->write_candidate_to_bed(options.CandidatePeakfile);
-
     
     treat->clean_m();
     control->clean_m();

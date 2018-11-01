@@ -29,12 +29,12 @@ char subpeak_letters(short i)
 }
 
 PeakIO::PeakIO(){
-    
 }
 PeakIO::~PeakIO()
 {
     
 }
+
 
 std::vector<PeakContent> PeakIO::get_data_from_chrom (std::string chrom)
 {
@@ -102,7 +102,6 @@ void PeakIO::add (std::string chromosome, int start, int end, int summit ,
     pt.fc = fold_change;
     
     
-    
     if (peaks.find(chromosome) == peaks.end())
     {
             std::vector<PeakContent> plist;
@@ -114,6 +113,15 @@ void PeakIO::add (std::string chromosome, int start, int end, int summit ,
         peaks[chromosome].push_back(pt);
     }
     
+}
+void PeakIO::merge_peaks(PeakIO *pp)
+{
+    for(auto p : pp->peaks)
+    {
+        for (auto pt : p.second) {
+            add(p.first,pt.start,pt.end,pt.summit,pt.score,pt.pileup,pt.pscore,pt.fc,pt.qscore);
+        }
+    }
 }
 //filter peaks by fold change
 void PeakIO::filter_fc (double fc_low, double fc_up )
@@ -373,7 +381,37 @@ void PeakIO::write_to_bed (std::string fname, std::string name_prefix, std::stri
 }
 
 //these methods are very fast, specifying types is unnecessary
-void PeakIO::write_candidate_to_bed (std::string fname)
+
+/*void PeakIO::append_candidate_to_bed (std::string chrom,PeakContent pt)
+{
+    
+    std::ofstream ofs ;
+    
+    try {
+        
+
+        ofs.open (CandidatePeakFile, std::ofstream::out);
+    
+        if (ofs.is_open()) { //file already exists.
+    
+            ofs.close();
+        
+            ofs.open(CandidatePeakFile, std::ofstream::app);
+            ofs << chrom << "\t" << pt.start << "\t" << pt.end << "\t" << "1" << "\t"  << pt.pileup << "\t" << pt.pscore << std::endl;
+            ofs.close();
+         }
+        else { //first time write to the file.
+            ofs << "chrom\tstar\tend\tpeakID\tpileup\tpscore\n";
+            ofs << chrom << "\t" << pt.start << "\t" << pt.end << "\t" << "1" << "\t"  << pt.pileup << "\t" << pt.pscore << std::endl;
+            ofs.close();
+        }
+    } catch (std::ofstream::failure e) {
+        error("cannot output candidate peaks.");
+        std::exit(1);
+    }
+
+}*/
+void PeakIO::write_candidate_to_bed (std::string CandidatePeakFile)
 {
     /*  """Write peaks in BED5 format in a file handler. Score (5th
      column) is decided by score_column setting. Check the
@@ -390,12 +428,11 @@ void PeakIO::write_candidate_to_bed (std::string fname)
     //                        print_func=fhd.write, trackline=trackline);
     int n_peak = 0;
     std::ofstream ofs ;
-    
-    ofs.open (fname, std::ofstream::out);
-
-    
+    ofs.open (CandidatePeakFile, std::ofstream::out);
+    info("candidate peak file name " + CandidatePeakFile);
     ofs << "chrom\tstar\tend\tpeakID\tpileup\tpscore\n";
     int i=0;
+    info("candidate peaks size "  +  std::to_string(peaks.size()));
     for (auto p : peaks ){
         std::map<double,std::vector<PeakContent> > ptlist_sortBy_end;
         //debug("num of candidate peaks " + std::to_string(p.second.size()));

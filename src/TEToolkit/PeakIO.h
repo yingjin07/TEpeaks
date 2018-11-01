@@ -38,7 +38,8 @@ class PeakIO
 {
 public:
     std::map<std::string,std::vector<PeakContent> > peaks;
-    
+    //std::string CandidatePeakFile;
+
     PeakIO();
     ~PeakIO();
 
@@ -51,11 +52,14 @@ public:
     void add (std::string chromosome, int start, int end, int summit = 0,
                double peak_score=0, double pileup=0,
                double pscore=0, double fold_change=0, double qscore=0);
+    void merge_peaks(PeakIO *p);
     void add_PeakContent ( std::string chromosome, PeakContent pc );
+    //void set_CandidatePeakFile(std::string ofile);
     void write_to_bed (std::string fname, std::string name_prefix="peak_", std::string name="TEpeaks",
                        std::string description = "%s", std::string score_column="score", bool trackline=true);
     void write_to_xls (std::string fname, std::string narrowFile, std::string name="TEpeaks",std::string name_prefix="peak",bool trackline=true,std::string score_column="score");
-    void write_candidate_to_bed (std::string);
+    void write_candidate_to_bed (std::string CandidateFile);
+    //void append_candidate_to_bed (std::string chrom,PeakContent pt);
     
 //    void write_to_summit_bed (std::string fname, std::string name_prefix="peak_", std::string name="TEpeaks",
 //                              std::string description="" , std::string score_column="score", bool trackline=true);

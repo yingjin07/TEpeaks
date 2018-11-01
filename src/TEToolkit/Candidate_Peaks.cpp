@@ -9,7 +9,7 @@
 #include "Candidate_Peaks.h"
 
 //#include "IntervalTree.h"
-#include <cmath>
+#include <math.h>
 #include <fstream>
 #include <sstream>
 //#include <regex>
@@ -73,7 +73,7 @@ void Candidate_Peaks::read_peaks(std::string peak_filename)
             try{
             std::getline(ss,chrom,'\t');
             
-            if (chrom == "chr") {
+            if (chrom == "chrom") {
                 continue;
             }
             std::string peakid;
@@ -151,7 +151,7 @@ void Candidate_Peaks::read_peaks(std::string peak_filename)
 
 double Candidate_Peaks::get_count(int g)
 {
-    if ((size_t)g < peak_reads.size()) {
+    if ((size_t)g < peak_reads.size() && g > -1) {
         return peak_reads[g];
     }
     else {
@@ -161,7 +161,7 @@ double Candidate_Peaks::get_count(int g)
 
 int Candidate_Peaks::get_length(int g)
 {
-    if ((size_t)g < peak_length.size()) {
+    if ((size_t)g < peak_length.size() && g > -1) {
         return peak_length[g];
     }
     else {
@@ -171,7 +171,7 @@ int Candidate_Peaks::get_length(int g)
 
 std::string Candidate_Peaks::get_chrom(int g)
 {
-    if ((size_t)g < peak_chrom.size()) {
+    if ((size_t)g < peak_chrom.size() && g > -1) {
         return peak_chrom[g];
     }
     else {
@@ -181,7 +181,7 @@ std::string Candidate_Peaks::get_chrom(int g)
 
 int Candidate_Peaks::get_start(int g)
 {
-    if ((size_t)g < peak_start.size()) {
+    if ((size_t)g < peak_start.size() && g > -1) {
         return peak_start[g];
     }
     else {
@@ -191,7 +191,7 @@ int Candidate_Peaks::get_start(int g)
 
 int Candidate_Peaks::get_end(int g)
 {
-    if ((size_t)g < peak_end.size()) {
+    if ((size_t)g < peak_end.size() && g > -1) {
         return peak_end[g];
     }
     else {
@@ -202,7 +202,7 @@ int Candidate_Peaks::get_end(int g)
 
 double Candidate_Peaks::get_pval(int g)
 {
-    if ((size_t) g < peak_pval.size()) {
+    if ((size_t) g < peak_pval.size() && g > -1) {
         return peak_pval[g];
     }
     else {
@@ -221,7 +221,7 @@ double Candidate_Peaks::get_pval(int g)
 */
 double Candidate_Peaks::get_fe(int g)
 {
-    if ((size_t) g < peak_fe.size()) {
+    if ((size_t) g < peak_fe.size() && g > -1) {
         return peak_fe[g];
     }
     else {
@@ -241,6 +241,7 @@ double Candidate_Peaks::get_fe(int g)
     }
 }
 */
+
 
 Candidate_Peaks::~Candidate_Peaks(){
     chrom_itvTree_Dict_itr it;

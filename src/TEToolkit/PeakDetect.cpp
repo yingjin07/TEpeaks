@@ -55,104 +55,6 @@ void PeakDetect::candidate_peakregions()
         delete this->peaks;
         this->peaks = new PeakIO();
     }
- /*   double lambda_bg,treat_sum,treat_total,control_total,control_sum;
-    //double d;
-    
-    std::vector<double> ctrl_scale_s;
-    std::vector<int> ctrl_d_s;
-    
-    if (peaks != nullptr) {
-        delete peaks;
-        
-        peaks = new PeakIO();
-    }
-
-    
-//ADD    if (opt->PE_mode){
-        //ADD this->d = 0;
-        //ADD
-//ADD        this->d = treat->average_template_length;
-//ADD        control_total = control->get_total() *2;
-//ADD    }
-
-    int treat_length = treat->length; //sum of fragment length for paied-end sample
-    treat_total = treat->get_total(); //total number of reads
-
-    // global lambda
-    if (opt->PE_mode){
-    //   this is an estimator, we should maybe test it for accuracy?
-        lambda_bg = treat_length / opt->gsize;
-    }
-    else{
-        lambda_bg = 1.0 * d * treat_total / opt->gsize; //total number of reads times fragment length
-    }
-    
-    treat_total   = this->treat->get_total();
-    
-    //ADD
-    if (opt->PE_mode){
-        d = treat->average_template_length;
-        control_total = this->control->get_total() * 2; // in PE mode, entire fragment is counted as 1
-        // in treatment whereas both ends of fragment are counted in control/input. ??
-        treat_sum = treat->length;
-        control_sum = control_total * treat->average_template_length;
-        ratio_treat2control = double(treat_sum)/control_sum;
-    }
-    else { //SE
-        d = opt->d;
-        control_total = control->get_total();
-        treat_sum = treat->get_total() * d;
-        control_sum = control->get_total() * d;
-        ratio_treat2control = double(treat_sum)/control_sum;
-    }
-    //ADD
-    
-    ctrl_d_s.push_back(d);
-    ctrl_scale_s.push_back(1.0);
-    
-//ADD    if (not opt->nolambda){
-        if (opt->PE_mode){
-            ctrl_scale_s.push_back(1.0 * treat_length/(opt->smalllocal * treat_total*2));
-            ctrl_scale_s.push_back(1.0 * treat_length/ (opt->largelocal * treat_total * 2));
-        }
-        else {
-            ctrl_scale_s.push_back(1.0 * d / opt->smalllocal);
-            ctrl_scale_s.push_back(1.0 * d / opt->largelocal);
-        }
-        ctrl_d_s.push_back(opt->smalllocal);
-        ctrl_d_s.push_back(opt->largelocal);
-//ADD    }
-    
-    //calculate peak scores, do each chromosome separately (can be parallellized)
-    CallerFromAlignments scorecalculator( treat, nullptr,ctrl_d_s,ctrl_scale_s,d,1.0,1.0,opt->shift,lambda_bg );
-                                        //        false,
-                                        //        false,
-                                        //        "",
-                                        //        "",
-                                        // "");
-                                           //     cutoff_analysis_filename = opt->cutoff_analysis_file
-                                           //     save_SPMR = false
-                                           //     );
-
-        //if opt->trackline: scorecalculator.enable_trackline()
-    // call candidate peaks
-    std::vector<std::string> scoring_function_symbols;
-    scoring_function_symbols.push_back("p");
-    
-    //scoring_function_symbols.push_back("fc");
-    std::vector<double> cutoff_list;
-    
-    cutoff_list.push_back(-1.0 * log10(opt->pval));
-    
-    //cutoff_list.push_back(opt->fecutoff);
-    
-    scorecalculator.call_peaks( this->peaks, scoring_function_symbols, cutoff_list,
-                                        d,
-                                        opt->tsize,
-                                            false,
-                                            false );
-    
-    */
     
     __call_peaks_w_control(false);
 
@@ -300,13 +202,15 @@ void PeakDetect::__call_peaks_w_control (bool uniqOnly)
     info("opt.gsize = " + std::to_string(opt->gsize));
 
     info("lambda_bg " + std::to_string(lambda_bg) + " treat_sum = " + std::to_string(treat_sum));
+    std::string bdg_prefix = opt->data_outdir + "/" + opt->project_name;
+    
       CallerFromAlignments  scorecalculator( treat, control,ctrl_d_s,ctrl_scale_s,
                                                 d,
                                                 treat_scale,
                                             
                                                 1.0,
                                                 opt->shift,
-                                            lambda_bg);
+                                            lambda_bg, false, true,bdg_prefix);
                                             //    false,
                                             //    false,
                                             //    "",
@@ -326,7 +230,7 @@ void PeakDetect::__call_peaks_w_control (bool uniqOnly)
     
     if (opt->log_qvalue && uniqOnly ){
         //if (opt->broad){
-        info("#4 Call peaks with given  qvalue cutoff : " + std::to_string (opt->fdr));
+        info("#4 Call peaks with given  q-value cutoff : " + std::to_string (opt->fdr));
       //   peaks = scorecalculator.call_broadpeaks(['q',], lvl1_cutoff_s=[opt->log_qvalue,],lvl2_cutoff_s=[opt->log_broadcutoff,],min_length=d,
       //   lvl1_max_gap=opt->tsize,lvl2_max_gap=d*4,
       //   auto_cutoff=opt->cutoff_analysis );
@@ -347,7 +251,7 @@ void PeakDetect::__call_peaks_w_control (bool uniqOnly)
                                                         auto_cutoff=opt->cutoff_analysis );
         }
         else{ */
-        info("#4 Call peaks with given -log10pvalue cutoff: " + std::to_string(opt->pval));
+        info("#4 Call peaks with given p-value cutoff: " + std::to_string(opt->pval));
         
         scoring_function_symbols.push_back("p");
         cutoff_list.push_back(-1.0 * log10(opt->pval));
@@ -356,8 +260,18 @@ void PeakDetect::__call_peaks_w_control (bool uniqOnly)
     }
     
     //debug("in PeakDetect call peaks");
-    scorecalculator.call_peaks(this->peaks,scoring_function_symbols, cutoff_list,uniqOnly,
-                                            d,opt->tsize);
+    
+    call_peak_options_t call_peak_opts;
+    
+    call_peak_opts.min_length = d;
+    call_peak_opts.max_gap = opt->tsize;
+    call_peak_opts.call_summits = false;
+    call_peak_opts.auto_cutoff = false;
+    call_peak_opts.uniqOnly = uniqOnly;
+    call_peak_opts.scoring_function_symbols = scoring_function_symbols;
+    call_peak_opts.score_cutoff_s = cutoff_list;
+    
+    scorecalculator.call_peaks(this->peaks,call_peak_opts);
     
                                             //call_summits=opt->call_summits,
                                             //auto_cutoff=opt->cutoff_analysis );

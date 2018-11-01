@@ -73,6 +73,7 @@ PACKAGE_VERSION = 0.1
 LOBJS= src/TEToolkit/Candidate_Peaks.o \
     src/TEToolkit/EM_TEpeaks.o \
     src/TEToolkit/EMestimate_reads.o \
+    src/TEToolkit/Float64HashTable.o \
     src/TEToolkit/GeneFeatures.o \
     src/TEToolkit/IntervalTree.o \
     src/TEToolkit/Parser.o \
@@ -115,6 +116,7 @@ src/TEToolkit/CallerFromAlignments.o: src/TEToolkit/CallerFromAlignments.cpp
 src/TEToolkit/Candidate_Peaks.o: src/TEToolkit/Candidate_Peaks.cpp
 src/TEToolkit/EM_TEpeaks.o: src/TEToolkit/EM_TEpeaks.cpp
 src/TEToolkit/EMestimate_reads.o: src/TEToolkit/EMestimate_reads.cpp
+src/TEToolkit/Float64HashTable.o: src/TEToolkit/Float64HashTable.cpp
 src/TEToolkit/GeneFeatures.o: src/TEToolkit/GeneFeatures.cpp
 src/TEToolkit/IntervalTree.o: src/TEToolkit/IntervalTree.cpp
 src/TEToolkit/Parser.o: src/TEToolkit/Parser.cpp

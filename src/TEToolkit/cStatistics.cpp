@@ -2,6 +2,9 @@
 
 #include <math.h>
 #include "cStatistics.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
 
 double chi2_k1_cdf ( double x )
 {
@@ -54,12 +57,16 @@ double log10_poisson_cdf ( unsigned int n, double lam, short lower )
     lower : if lower is False, calculate the upper tail CDF, otherwise, to calculate lower tail; Default is False.
     log10 : if log10 is True, calculation will be in log space. Default is False.
   */
+  double res;
   if ( lower )
     // lower tail
     return log10_poisson_cdf_P_large_lambda( n, lam );
   else
     // upper tail
-    return log10_poisson_cdf_Q_large_lambda( n, lam );
+    
+    res = log10_poisson_cdf_Q_large_lambda( n, lam );
+    //std::cout << n << "\t" << lam << "\t" << res  << std::endl;
+    return res;
 }
 
 double log10_poisson_cdf_P_large_lambda ( unsigned int k, double lbd )
