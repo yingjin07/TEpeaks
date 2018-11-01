@@ -30,7 +30,8 @@ AR     = ar
 RANLIB = ranlib
 
 CPPFLAGS = $(DFLAGS) ${MACOS} $(INCLUDES)
-CFLAGS   = -g -fpermissive -Wall -O9 -O3 -std=c++11 -fPIC 
+#CFLAGS   = -g -fpermissive -Wall -O9 -O3 -std=c++11 -fPIC 
+CFLAGS   = -g -fpermissive -Wall -O1 -std=c++11 -fPIC 
 LDFLAGS  = -O9 -fpermissive
 LDLIBS   =
 DFLAGS =     -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_CURSES_LIB=1
@@ -73,6 +74,7 @@ PACKAGE_VERSION = 0.1
 LOBJS= src/TEToolkit/Candidate_Peaks.o \
     src/TEToolkit/EM_TEpeaks.o \
     src/TEToolkit/EMestimate_reads.o \
+    src/TEToolkit/Float64HashTable.o \
     src/TEToolkit/GeneFeatures.o \
     src/TEToolkit/IntervalTree.o \
     src/TEToolkit/Parser.o \
@@ -94,7 +96,7 @@ LOBJS= src/TEToolkit/Candidate_Peaks.o \
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 TEpeaks: $(TEToolkitLIB) $(HTSLIB) src/TEpeaks.o src/narrow_TEpeaks.o
-	$(CC) -lpthread $(LDFLAGS) -o $@ src/TEpeaks.o src/narrow_TEpeaks.o $(TEToolkitLIB) $(HTSLIB) $(LDLIBS) -lz -lm
+	$(CC) -lpthread $(LDFLAGS)  -o $@ src/TEpeaks.o src/narrow_TEpeaks.o $(TEToolkitLIB) $(HTSLIB) $(LDLIBS) -lz -lm
 
 #libTEToolkit.so: $(LOBJS) $(HTSLIB)
 #	$(CC) -pthread $(LDFLAGS) -o $@ $(AOBJS) $(HTSLIB) $(LDLIBS) $(LIBCURSES) -lm -lz
@@ -115,6 +117,7 @@ src/TEToolkit/CallerFromAlignments.o: src/TEToolkit/CallerFromAlignments.cpp
 src/TEToolkit/Candidate_Peaks.o: src/TEToolkit/Candidate_Peaks.cpp
 src/TEToolkit/EM_TEpeaks.o: src/TEToolkit/EM_TEpeaks.cpp
 src/TEToolkit/EMestimate_reads.o: src/TEToolkit/EMestimate_reads.cpp
+src/TEToolkit/Float64HashTable.o: src/TEToolkit/Float64HashTable.cpp
 src/TEToolkit/GeneFeatures.o: src/TEToolkit/GeneFeatures.cpp
 src/TEToolkit/IntervalTree.o: src/TEToolkit/IntervalTree.cpp
 src/TEToolkit/Parser.o: src/TEToolkit/Parser.cpp

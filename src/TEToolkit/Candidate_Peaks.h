@@ -33,6 +33,7 @@ public:
     
     int get_numofpeaks();
     int get_ovp_peaks(std::string chrom,std::vector<std::pair<int,int> > itv_list, int shiftsize,std::string strand);
+    
 
     std::vector<int> peak_length;
     
@@ -41,6 +42,7 @@ private:
     std::vector<int> peak_start;
     std::vector<int> peak_end;
     std::vector<std::string> peak_chrom;
+    
     
     std::vector<double> peak_pval;
     std::vector<double> peak_fe;

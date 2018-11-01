@@ -79,7 +79,6 @@
 #include "zeroin.h"
 #include <vector>
 //#include <cfloat>
-#include <cmath>
 #include <iostream>
 #include <numeric>
 #include <algorithm>

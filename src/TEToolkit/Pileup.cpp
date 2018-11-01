@@ -98,7 +98,10 @@ std::pair<std::vector<int>,std::vector<double> > max_over_two_pv_array ( std::pa
 
 void fix_coordinates(std::vector<int> &poss, int rlength)
 {
-
+    if( poss.size() == 0) 
+    {
+       return ;
+    }
     for(size_t i=0; i < poss.size() ; i++)
     {
         if (poss[i] < 0){
@@ -117,7 +120,6 @@ void fix_coordinates(std::vector<int> &poss, int rlength)
             break;
         }
     }
-
 }
 
 std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::vector<int> plus_tags, std::vector<int> minus_tags, int five_shift, int three_shift, int rlength, double scale_factor, double baseline_value )
@@ -148,12 +150,6 @@ std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::ve
     int  p, pre_p, pileup;
     
     std::vector<int> start_poss, end_poss;
-    std::vector<int> ret_p; //(2*lx,0);
-    std::vector<double> ret_v; //( 2 * lx, 0.0 );
-    if (plus_tags.size() == 0)
-    {
-        return  std::pair<std::vector<int>,std::vector<double> >(ret_p,ret_v);;
-    }
     
     //pointers are used for numpy arrays
    // int * start_poss_ptr;
@@ -170,30 +166,25 @@ std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::ve
         start_poss.push_back(minus_tags[i] - three_shift);
         end_poss.push_back(minus_tags[i] + five_shift);
     }
-    
-    
-    
+     //debug( "start se_all_in_one_pileup " + std::to_string(start_poss.size()) + "\t" + std::to_string(rlength) );
     // sort
     std::sort(start_poss.begin(),start_poss.end());
     std::sort(end_poss.begin(),end_poss.end());
-    
     
     // fix negative coordinations and those extends over end of chromosomes
     fix_coordinates(start_poss, rlength);
     fix_coordinates(end_poss, rlength);
     
-    
     //lx = start_poss.size();
-
    // start_poss_ptr = <int32_t *> start_poss.data
    // end_poss_ptr = <int32_t *> end_poss.data
 
+    std::vector<int> ret_p; //(2*lx,0);
+    std::vector<double> ret_v; //( 2 * lx, 0.0 );
 
     int lx = start_poss.size();
    // ret_p_ptr = <int32_t *> ret_p.data
    // ret_v_ptr = <float32_t *> ret_v.data
-    
-
 
     //std::pair<std::vector<int>,std::vector<double> >tmp (ret_p,ret_v);//for (endpos,value)
     
@@ -205,8 +196,10 @@ std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::ve
 
     pileup = 0;
     
-    
-
+    if (start_poss.size() == 0)
+    {
+        return  std::pair<std::vector<int>,std::vector<double> >(ret_p,ret_v);;
+    }
     
     pre_p = std::min(start_poss[0],end_poss[0]);
 
@@ -218,13 +211,10 @@ std::pair<std::vector<int>, std::vector<double> > se_all_in_one_pileup ( std::ve
     }
     //pre_v = pileup;
 
-    
     if (start_poss.size() != end_poss.size()) {
         error("error in pileup, different number of start_pos and end_pos!");
         std::exit(1);
     }
-    
-    
 
    // debug("while loop");
     while (i_s < lx and i_e < lx){
@@ -306,9 +296,7 @@ std::pair<std::vector<int>,std::vector<double> > quick_pileup ( std::vector<pos_
     values. 
 
     It will return a pileup result in similar structure as
-    bedGraph. There are two python arrays:
-    
-    [end positions, values] or [p,v]
+    bedGraph.
 
     Two arrays have the same length and can be matched by index. End
     position at index x (p[x]) record continuous value of v[x] from

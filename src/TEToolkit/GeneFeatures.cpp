@@ -8,7 +8,7 @@
 
 #include "GeneFeatures.h"
 
-#include <cmath>
+#include <math.h>
 #include <fstream>
 #include <sstream>
 //#include <regex>

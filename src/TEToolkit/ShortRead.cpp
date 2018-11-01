@@ -110,9 +110,9 @@ void ShortRead::append_shortreads(ShortRead *other)
 {
     this->total += other->total;
     this->total_uniq += other->total_uniq;
-    this->length += other->length;
     this->total_multi += other->total_multi;
-
+    this->length += other->length;
+    
     average_template_length = (int)this->length/this->total_uniq;
     
     int strand = 0;
@@ -328,7 +328,6 @@ std::pair<std::vector<int>,std::vector<double> > ShortRead::pileup_a_chromosome_
 
         
         tmp_pileup = se_all_in_one_pileup ( __locations[chromID]['l'], __locations[chromID]['r'], five_shift, three_shift, rlength, scale_factor, baseline_value );
-        //debug("after call se_all_in_one_pileup");
         if (prev_pileup_init_flag){
             prev_pileup = max_over_two_pv_array ( prev_pileup, tmp_pileup );
         }
@@ -362,7 +361,6 @@ std::pair<std::vector<int>,std::vector<double> > ShortRead::pileup_a_chromosome 
     
     int rlength = rlengths[chrom];
     int chromID = chromNameToId[chrom];
-    
     //object ends;
     std::vector<int> five_shift_s ;
     std::vector<int> three_shift_s ;
@@ -396,18 +394,17 @@ std::pair<std::vector<int>,std::vector<double> > ShortRead::pileup_a_chromosome 
         five_shift = five_shift_s[i];
         three_shift = three_shift_s[i];
         double scale_factor = scale_factor_s[i];
-       // debug("In pileup_a_chromosome ds = " + std::to_string(ds[i]) + "scale factor = " + std::to_string(scale_factor));
         //SE
         std::pair<std::vector<int>,std::vector<double> > tmp_pileup;
         
         
         if (uniqOnly) {
+            
             tmp_pileup = se_all_in_one_pileup ( __locations[0][chromID], __locations[1][chromID], five_shift, three_shift, rlength, scale_factor, baseline_value );
         }
         else {//include multi-reads
             std::vector<int> merge_list1; //merge unique reads and multi reads, strand=0
             std::vector<int> merge_list2; //merge unique reads and multi reads, strand = 1
-            
 
             std::merge(__locations[0][chromID].begin(),__locations[0][chromID].end(),__locations_m[0][chromID].begin(),__locations_m[0][chromID].end(),std::back_inserter(merge_list1));
             
@@ -421,7 +418,6 @@ std::pair<std::vector<int>,std::vector<double> > ShortRead::pileup_a_chromosome 
             prev_pileup.first.clear();
             prev_pileup.second.clear();
             prev_pileup = ret_pileup;
-            //debug("In pileup_a_chromosome prev_pileup size = " + std::to_string(prev_pileup.first.size()));
         }
         else{
             prev_pileup = tmp_pileup;
@@ -545,7 +541,6 @@ void ShortRead::add_loc ( std::string chromosome, int fiveendpos, int strand , d
         
     }
     else { //multi reads
-        //debug("in add loc strand " + std::to_string(strand) + " chromID " + std::to_string(chrID));
         if (__locations_m[strand].find(chrID) == __locations_m[strand].end())
         {
             std::vector<int> pos;

@@ -10,6 +10,7 @@
 #define __TEToolkit_c____Parser__
 
 //#include <boost/python.hpp>
+
 #include <stdio.h>
 #include <string>
 #include <sys/stat.h>
@@ -19,6 +20,7 @@
 #include "htslib/sam.h"
 #include <vector>
 #include <map>
+
 #include "Candidate_Peaks.h"
 //#include "TEToolkit/Parse_BED.h"
 #include "ShortRead.h"
@@ -127,6 +129,7 @@ struct opt_t
         keepdupNum=0;
         
         project_name="NONAME";
+        keepDuplicates="1";
         fragsize=0;
         shift=0;
         
@@ -164,7 +167,7 @@ struct opt_t
 #define IS_DUP(bam) ((bam)->core.flag&BAM_FDUP)
 
 
-typedef std::map<int, std::vector<int>> MULTI_READ_MAP;
+
 
 struct read_t
 {
@@ -175,6 +178,19 @@ struct read_t
     
 };
 
+struct peak_align_t
+{
+    std::vector<int> treat_multi_align_list;
+    std::vector<int> ctrl_multi_align_list;
+};
+
+struct multi_read_t
+{
+    std::vector<int> pidlist;
+    std::vector<int> startlist;
+};
+
+typedef std::map<int, multi_read_t> MULTI_READ_MAP;
 
 template <class T>
 struct read_pair_t {
@@ -190,7 +206,8 @@ struct thread_context_t
     pthread_t thread_object;
     pthread_spinlock_t cur_reads_lock;
     
-    std::vector<read_pair_t<T> *> * cur_reads;
+    std::vector<read_pair_t<T> *> cur_reads;
+    //std::vector<read_pair_t<T> *> * cur_reads;
     
     ShortRead * track;
     int fraglength;
@@ -199,7 +216,9 @@ struct thread_context_t
     int n_tags;
     
     std::vector<int> * peak_reads;
-    std::map<int,std::vector<int> > * multi_read_mapTo_pids;
+    MULTI_READ_MAP * multi_read_mapTo_pids;
+    //MULTI_READ_MAP * multi_read_Align_start;
+    std::map<int, std::vector<int> > * peak_uniqReads_startPos;
     
 } ;
 
@@ -230,7 +249,7 @@ extern "C" {
 
 std::pair<ShortRead *, ShortRead *> read_aligmentFile(opt_t &options, int flag = UNIQONLY);
 
-    void read_distribution(ShortRead * track, std::string inputFile,Candidate_Peaks * peakIdx,opt_t options,std::vector<double> * peak_reads_Prime, std::map<int,std::vector<int> > * multi_read_mapTo_pids);
+    void read_distribution(ShortRead * track, std::string inputFile,Candidate_Peaks * peakIdx,opt_t options,std::vector<double> * peak_reads_Prime, MULTI_READ_MAP * multi_read_mapTo_pids,std::map<int, std::vector<int> > * peak_uniqReads_startPos);
     
 void read_distribution_BAM(ShortRead * track, std::string inputFile,Candidate_Peaks * peakIdx,opt_t options,std::vector<double> & peak_reads_Prime);
     
