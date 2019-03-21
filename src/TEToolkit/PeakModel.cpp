@@ -62,9 +62,10 @@ bool PeakModel::build ()
     //int num_paired_peakpos, num_paired_peakpos_remained, num_paired_peakpos_picked;
     
     peaksize = 2 * bw;
- //ADD   int min_tags = int(std::round(1.0 * treatment->total_uniq * lmfold * peaksize / gz /2));
+    debug("peak size = " + std::to_string(peaksize));
+    min_tags = int(std::round(1.0 * treatment->total_uniq * lmfold * peaksize / gz /2));
     // mininum unique hits on single strand
-//ADD    int max_tags = int(std::round(1.0 * treatment->total_uniq * umfold * peaksize / gz /2));
+    max_tags = int(std::round(1.0 * treatment->total_uniq * umfold * peaksize / gz /2));
     // maximum unique hits on single strand
 
     // use treatment data to build model
@@ -138,7 +139,7 @@ void PeakModel::__paired_peak_model ( PairedPeaks_Dict paired_peakpos)
         minus_line[k] = 0;
     }
     
-    info("start model_add_line...");
+    //info("start model_add_line...");
     //std::vecotr<int> chroms = paired_peakpos.keys();
         
     //BOOST_FOREACH( PairedPeaks_Dict::value_type pp, paired_peakpos)
@@ -330,10 +331,13 @@ void PeakModel::__paired_peaks (PairedPeaks_Dict &paired_peaks_pos)
         plus_tags = treatment->get_locations_by_chr_uniq( v.second, 1);
         minus_tags  = treatment->get_locations_by_chr_uniq( v.second, 0 );
         
+        debug("before naive find peaks " );
+        debug("size = " + std::to_string(treatment->numOfUniqTags_by_chr(v.second,0)));
+        
         std::vector<std::pair<int, int> > plus_peaksinfo = __naive_find_peaks ( plus_tags, treatment->numOfUniqTags_by_chr(v.second,0), 1 );
         
-        //debug("Number of unique tags on + strand: " + std::to_string( treatment->numOfUniqTags_by_chr(v.second,0)) );
-        //debug("Number of peaks in + strand: " + std::to_string( plus_peaksinfo.size() ) );
+        debug("Number of unique tags on + strand: " + std::to_string( treatment->numOfUniqTags_by_chr(v.second,0)) );
+        debug("Number of peaks in + strand: " + std::to_string( plus_peaksinfo.size() ) );
         
         std::vector<std::pair<int, int> > minus_peaksinfo = __naive_find_peaks ( minus_tags, treatment->numOfUniqTags_by_chr(v.second,1), 0 );
         
@@ -341,7 +345,7 @@ void PeakModel::__paired_peaks (PairedPeaks_Dict &paired_peaks_pos)
         //debug("Number of peaks in - strand: " + std::to_string( minus_peaksinfo.size() ) );
         
         if (plus_peaksinfo.size()==0 || minus_peaksinfo.size()==0){
-            //debug("Chromosome " + v.first + " is discarded!" );
+            debug("Chromosome " + v.first + " is discarded!" );
             continue;
         }
         else{
@@ -415,8 +419,10 @@ std::vector<std::pair<int, int> > PeakModel::__naive_find_peaks (std::vector<int
     }
     
     pos = taglist[0];
+    
     current_tag_list.push_back(pos);
-
+    
+    debug("list size = " + std::to_string(size));
     for (int i=1; i < size; i++)
     {
         pos = taglist[i];
@@ -425,10 +431,16 @@ std::vector<std::pair<int, int> > PeakModel::__naive_find_peaks (std::vector<int
         {
             // call peak in current_tag_list when the region is long enough
             // a peak will be called if tag number is ge min tags.
-            
+            debug("pos = " + std::to_string(pos));
+            debug("current_tag_list[0] = " + std::to_string(current_tag_list[0]));
+            debug("min_tags = " + std::to_string(min_tags));
+            debug("max_tags = " + std::to_string(max_tags));
+            debug("current tab list size = " + std::to_string(current_tag_list.size()));
             if ((int)current_tag_list.size() >= min_tags && (int)current_tag_list.size() <= max_tags)
             {
+                debug("current i = " + std::to_string(i));
                 peak_info.push_back( std::pair<int,int>( __naive_peak_pos(current_tag_list,plus_strand), current_tag_list.size()) );
+                debug("after naive peak pos");
             }
 
             current_tag_list.clear();
@@ -448,11 +460,15 @@ int PeakModel::__naive_peak_pos (std::vector<int> pos_list, int plus_strand )
     std::vector<int> ss, es;
 
     int peak_length = pos_list.back() + 1 - pos_list.front() + tag_expansion_size;
+    
+    debug("peak_length = " + std::to_string(peak_length));
 
     int start = pos_list[0] - tag_expansion_size/2; // leftmost position of project line
 
     std::vector<int> horizon_line (peak_length,0);  // the line for tags to be projected
 
+    debug("start in naive peak pos 0");
+    
     BOOST_FOREACH(int pos, pos_list)
     {
         ss.push_back( std::max(pos - start - tag_expansion_size/2,0) );
@@ -478,7 +494,7 @@ int PeakModel::__naive_peak_pos (std::vector<int> pos_list, int plus_strand )
             horizon_line[ i ] = 0;
         }
     }
-
+    debug("start in naive peak pos 1");
     while( i_s < ls and i_e < le){
         if( ss[ i_s ] < es[ i_e ]){
             int p = ss[ i_s ];
@@ -523,7 +539,7 @@ int PeakModel::__naive_peak_pos (std::vector<int> pos_list, int plus_strand )
             pileup -= 1;
         }
     }
-
+    debug("naive peak pos 2");
     std::vector<int> top_pos ;            // to record the top positions. Maybe > 1
     int top_p_num = 0 ;          // the maximum number of projected points
     
@@ -539,38 +555,7 @@ int PeakModel::__naive_peak_pos (std::vector<int> pos_list, int plus_strand )
             }
         }
     }
-           
+      debug("naive peak pos 3");
     return top_pos[int(top_pos.size()/2)]+start;
 }
 
-/*    cdef __naive_peak_pos2 (self, pos_list, int plus_strand ):
-        """Naively calculate the position of peak.
-
-        plus_strand: 1, plus; 0, minus
-
-        return the highest peak summit position.
-        """
-        cdef int peak_length, start, pos, i, pp, top_p_num
-        
-        peak_length = pos_list[-1]+1-pos_list[0]+tag_expansion_size
-        if plus_strand:
-            start = pos_list[0] 
-        else:
-            start = pos_list[0] - tag_expansion_size
-        horizon_line = np.zeros(peak_length, dtype="int32") # the line for tags to be projected
-        for i in range(len(pos_list)):
-            pos = pos_list[i]
-            if plus_strand:
-                for pp in range(int(pos-start),int(pos-start+tag_expansion_size)): # projected point
-                    horizon_line[pp] += 1
-            else:
-                for pp in range(int(pos-start-tag_expansion_size),int(pos-start)): # projected point
-                    horizon_line[pp] += 1
-
-        # top indices
-        #print pos_list
-        #print horizon_line
-        top_indices = np.where(horizon_line == horizon_line.max())[0]
-        #print top_indices+start
-        return top_indices[ int(top_indices.shape[0]/2) ] + start
-*/

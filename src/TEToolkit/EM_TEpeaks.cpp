@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <ctime>
 #include <sstream>
+#include <tuple>
 
 #include "htslib/sam.h"
 //#include "IntervalTree.h"
@@ -43,7 +44,7 @@ void prepare_EM_structure(Candidate_Peaks *peakIdx,std::vector<double> peak_read
     
     for (itr = multi_read_mapTo_pids->begin(); itr != multi_read_mapTo_pids->end(); itr ++)
     {
-        int readID = itr->first;
+        //int readID = itr->first;
         //std::cout << "multi read " << readID << std::endl;
         std::vector<int> pidlist = itr->second.pidlist;
         std::vector<int> startlist = itr->second.startlist;
@@ -167,7 +168,7 @@ std::pair<int,double> get_pos_id(double pos_w,std::vector<double> multi_weights,
     //get the first start position
     int pos = (int) std::floor(pos_w);
     double pre_v = pos_w - pos;
-    int id = -1;
+    //int id = -1;
     double w = 1.0;
     
  /*   if(pre_v != 0)//multi_read
@@ -185,15 +186,20 @@ std::pair<int,double> get_pos_id(double pos_w,std::vector<double> multi_weights,
         int ma_id = maid_list[idx];
         if ( ma_id > multi_weights.size())
         {
+            
+            info("ma_id = " + std::to_string(ma_id));
+            info("multi_weights.size = " + std::to_string(multi_weights.size()));
             info("id is not in multi_weights in get_pos_id !!");
-            std::exit(1);
+            //std::exit(1);
+            w = 0.0;
         }
         if(ma_id < 0)
         {
             info("id is less than 0!!");
             info(std::to_string(pre_v));
             info("pos_w " + std::to_string(pos_w));
-            std::exit(1);
+            w = 0.0;
+            //std::exit(1);
         }
         w = multi_weights[ma_id];
     }
@@ -205,7 +211,7 @@ std::pair<int,double> get_pos_id(double pos_w,std::vector<double> multi_weights,
     
 }
 
-void pileup_peak ( std::vector<double> poss,  std::vector<double> multi_weights, int fragsize, std::pair<std::vector<int>,std::vector<double> > &ret , std::vector<int> maid_list)
+void pileup_peak ( std::vector<std::tuple<int,double> > poss, int fragsize, std::pair<std::vector<int>,std::vector<double> > &ret )
 {
     /*"""Return pileup given start positions of fragments of both unique reads and multi-reads.
      
@@ -247,18 +253,27 @@ void pileup_peak ( std::vector<double> poss,  std::vector<double> multi_weights,
     }
     
     //get the first start position
-    std::pair<int,double> pos_id = get_pos_id(poss[0],multi_weights,maid_list);
+    //std::pair<int,double> pos_id = get_pos_id(poss[0],multi_weights,maid_list);
+    std::tuple<int,double> pos_id = poss[0];
     //info("after get pos_id 0");
-    pre_p = pos_id.first;
+    pre_p = std::get<0>(pos_id);
     // pre_w = pos_id.second;
     
-    ret.first.push_back(pos_id.first);
+    
+    ret.first.push_back(pre_p );
     ret.second.push_back(0.0);
+    
     I += 1;
-    std::vector<double> pos_end;
+    
+    std::vector<std::tuple<int,double> > pos_end;
     
     for (auto k : poss ) {
-        pos_end.push_back(k + 1.0 *fragsize);
+        
+        int k_pos = std::get<0>(k) + fragsize;
+        double k_w = std::get<1>(k);
+        
+        pos_end.push_back(std::tuple<int,double>(k_pos,k_w));
+        
     }
     
     //pre_v = pileup;
@@ -266,15 +281,20 @@ void pileup_peak ( std::vector<double> poss,  std::vector<double> multi_weights,
     while( i_s < ls and i_e < ls)
     {
        
-        std::pair<int,double> pos_id_s = get_pos_id(poss[i_s],multi_weights,maid_list);
-        std::pair<int,double> pos_id_e = get_pos_id(pos_end[i_e],multi_weights,maid_list);
+        std::tuple<int,double> pos_id_s = poss[i_s];
         
+        std::tuple<int,double> pos_id_e = pos_end[i_e];
         
-        if (pos_id_s.first < pos_id_e.first)
+        int p_start = std::get<0>(pos_id_s);
+        int p_end = std::get<0>(pos_id_e);
+        
+        if (p_start < p_end)
         {
+            //p = pos_id_s.first;
+            p = std::get<0>(pos_id_s);
             
-            p = pos_id_s.first;
-            double w = pos_id_s.second;
+            //double w = pos_id_s.second;
+            double w = std::get<1>(pos_id_s);
             
             if (p != pre_p)
             {
@@ -288,11 +308,12 @@ void pileup_peak ( std::vector<double> poss,  std::vector<double> multi_weights,
             
             i_s += 1;
         }
-        if (pos_id_s.first > pos_id_e.first)
+        
+        if (p_start > p_end)
         {
             
-            p = pos_id_e.first;
-            double w = pos_id_e.second;
+            p = std::get<0>(pos_id_e);
+            double w = std::get<1>(pos_id_e);
             
             if (p != pre_p)
             {
@@ -305,14 +326,12 @@ void pileup_peak ( std::vector<double> poss,  std::vector<double> multi_weights,
             
             i_e += 1;
         }
-        if (pos_id_s.first == pos_id_e.first){
+        if (p_start == p_end){
             
+            double pre_w = std::get<1>(pos_id_e);
             
-            double pre_w = pos_id_e.second;
-            
-            
-            double w = pos_id_s.second;
-            p = pos_id_s.first;
+            double w = std::get<1>(pos_id_s);
+            p = std::get<0>(pos_id_s);
             
             if(p != pre_p)
             {
@@ -334,10 +353,10 @@ void pileup_peak ( std::vector<double> poss,  std::vector<double> multi_weights,
         for (int i = i_e; i< ls; i++)
         {
             
-            std::pair<int,double> pos_id = get_pos_id(pos_end[i],multi_weights,maid_list);
+            std::tuple<int,double> pos_id = pos_end[i];
             
-            p = pos_id.first;
-            double w = pos_id.second;
+            p = std::get<0>(pos_id);
+            double w = std::get<1>(pos_id);
             
             if (p != pre_p)
             {
@@ -504,6 +523,15 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
          info("loop through all peaks");
         //std::ofstream f;
         //f.open("tmp",std::ofstream::out);
+        std::string p_chrom = "";
+        int p_start = 0;
+        int p_end = 0;
+        double p_summit_pscore = 0.0;
+        int p_ip_tag = 0;
+        int p_input_tag = 0;
+        int p_summit_pileup = 0;
+        double p_fe = 0.0;
+
         
         for (size_t i =0; i < IP_peakReads.size(); i++) {
             
@@ -524,12 +552,16 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
             
             double pileup = 1.0 * ip_tag * options.treat_scale;
             
-            std::vector<double> treat_pos_id_array;
-            std::vector<double> ctrl_pos_id_array;
+           // std::vector<double> treat_pos_id_array;
+            std::vector<std::tuple<int,double> > treat_pos_id_array;
+            //std::vector<double> ctrl_pos_id_array;
+            std::vector<std::tuple<int,double> > ctrl_pos_id_array;
             
-            std::vector<double> treat_multi_pos_id_array; //for output bedgraph
-            std::vector<double> ctrl_multi_pos_id_array; //for output bedgraph
-           
+            //std::vector<double> treat_multi_pos_id_array; //for output bedgraph
+            //std::vector<double> ctrl_multi_pos_id_array; //for output bedgraph
+            
+            std::vector<std::tuple<int, double> > treat_multi_pos_id_array;
+            std::vector<std::tuple<int, double> > ctrl_multi_pos_id_array;
            // info("options.fe = " + std::to_string(options.fe));
             
             //if (pileup > options.pileup && fe > options.fe )
@@ -542,22 +574,26 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
                 {
                 //info("find treat uniq reads");
                     
-                std::copy(treat_peak_uniqReads_startPos->at(i).begin(), treat_peak_uniqReads_startPos->at(i).end(),
-                          std::back_inserter(treat_pos_id_array));
-                    int nn = treat_pos_id_array.size() - 1;
-                /*    for(int k=0; k <= nn ; k++)
+                   // std::copy(treat_peak_uniqReads_startPos->at(i).begin(), treat_peak_uniqReads_startPos->at(i).end(), std::back_inserter(treat_pos_id_array));
+                   // int nn = treat_pos_id_array.size() - 1;
+                    
+                    for(auto pos : treat_peak_uniqReads_startPos->at(i))
                     {
-                    info("treat_pos_id_array[i] = " + std::to_string(treat_pos_id_array[i]));
-                    //info("treat_pos_id_array[size] = " + std::to_string(treat_pos_id_array[nn]));
-                    }*/
+                        treat_pos_id_array.push_back(std::make_tuple(pos,1.0));
+                        //info("treat_pos_id_array[i] = " + std::to_string(treat_pos_id_array[i]));
+                        //info("treat_pos_id_array[size] = " + std::to_string(treat_pos_id_array[nn]));
+                    }
                 }
                 //copy unique read start positiion of ctrl sample
                 if(ctrl_peak_uniqReads_startPos->find(i) != ctrl_peak_uniqReads_startPos->end())
                 {
                 // info("find ctrl uniq reads");
-                std::copy(ctrl_peak_uniqReads_startPos->at(i).begin(), ctrl_peak_uniqReads_startPos->at(i).end(),
-                          std::back_inserter(ctrl_pos_id_array));
+                //std::copy(ctrl_peak_uniqReads_startPos->at(i).begin(), ctrl_peak_uniqReads_startPos->at(i).end(),std::back_inserter(ctrl_pos_id_array));
                     //info("ctrl_pos_id_array[0] = " + std::to_string(ctrl_pos_id_array[0]));
+                    for(auto pos : ctrl_peak_uniqReads_startPos->at(i))
+                    {
+                        ctrl_pos_id_array.push_back(std::make_tuple(pos,1.0));
+                    }
                 }
                 
                 int frag_size = options.fragsize;
@@ -581,10 +617,12 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
                     double w =treat_multiAlgn_weight[ma_id];
                     if(w >= 0.01){
                         treat_maid_list.push_back(ma_id);
-                        double code = 1.0 * pos + 1.0/(index+2);
+                        //double code = 1.0 * pos + 1.0/(index+2);
                         
-                        treat_pos_id_array.push_back(code);
-                        treat_multi_pos_id_array.push_back(code);
+                        //treat_pos_id_array.push_back(code);
+                        treat_pos_id_array.push_back(std::make_tuple(pos,w));
+                        //treat_multi_pos_id_array.push_back(code);
+                        treat_multi_pos_id_array.push_back(std::make_tuple(pos,w));
                         index += 1;
                     }
                 }
@@ -600,11 +638,11 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
                     }
                     if(w >= 0.01){
                         ctrl_maid_list.push_back(ma_id);
-                        double code = 1.0 * pos + 1.0/(index+2);
+                      //  double code = 1.0 * pos + 1.0/(index+2);
                      //   info("ctrl pos = " + std::to_string(pos));
                      //   info("ctrl code = " + std::to_string(code));
-                        ctrl_pos_id_array.push_back(code);
-                        ctrl_multi_pos_id_array.push_back(code);
+                        ctrl_pos_id_array.push_back(std::make_tuple(pos,w));
+                        ctrl_multi_pos_id_array.push_back(std::make_tuple(pos,w));
                         index += 1;
                     }
                 }
@@ -617,18 +655,18 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
                
                 //info("before pileup_peak1");
                 std::pair<std::vector<int>,std::vector<double> > treat_pos_weight_pair;
-            pileup_peak(treat_pos_id_array,treat_multiAlgn_weight,frag_size,treat_pos_weight_pair,treat_maid_list);
+                pileup_peak(treat_pos_id_array,frag_size,treat_pos_weight_pair);
                 // info("after pileup_peak1");
                 std::pair<std::vector<int>,std::vector<double> > ctrl_pos_weight_pair;
-                 pileup_peak(ctrl_pos_id_array,ctrl_multiAlgn_weight,frag_size,ctrl_pos_weight_pair,ctrl_maid_list);
+                pileup_peak(ctrl_pos_id_array,frag_size,ctrl_pos_weight_pair);
                 // info("after pileup_peak2");
                 //for output bedgraph of multi_reads
                 std::pair<std::vector<int>,std::vector<double> > treat_multi_pos_weight_pair ;
-            pileup_peak(treat_multi_pos_id_array,treat_multiAlgn_weight,frag_size,treat_multi_pos_weight_pair,treat_maid_list);
+                pileup_peak(treat_multi_pos_id_array,frag_size,treat_multi_pos_weight_pair);
                 
                 // info("after pileup_peak3");
                 std::pair<std::vector<int>,std::vector<double> > ctrl_multi_pos_weight_pair;
-                pileup_peak(ctrl_multi_pos_id_array,ctrl_multiAlgn_weight,frag_size,ctrl_multi_pos_weight_pair,ctrl_maid_list);
+                pileup_peak(ctrl_multi_pos_id_array,frag_size,ctrl_multi_pos_weight_pair);
                 // info("after pileup_peak4");
                 
                 
@@ -637,7 +675,7 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
                 pos_treat_ctrl_pair.treat_v.clear();
                 pos_treat_ctrl_pair.ctrl_v.clear();
                 
-            pair_treat_ctrl(treat_pos_weight_pair,ctrl_pos_weight_pair,pos_treat_ctrl_pair);
+                pair_treat_ctrl(treat_pos_weight_pair,ctrl_pos_weight_pair,pos_treat_ctrl_pair);
                 
                 // info("after pair_treat_ctrl1");
                 pos_tc_t pos_treat_ctrl_multi_pair;
@@ -645,11 +683,11 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
                 pos_treat_ctrl_multi_pair.treat_v.clear();
                 pos_treat_ctrl_multi_pair.ctrl_v.clear();
                 
-             pair_treat_ctrl(treat_multi_pos_weight_pair,ctrl_multi_pos_weight_pair,pos_treat_ctrl_multi_pair);
+                pair_treat_ctrl(treat_multi_pos_weight_pair,ctrl_multi_pos_weight_pair,pos_treat_ctrl_multi_pair);
                  //info("after pair_treat_ctrl2");
                 
                 //output bedgraph
-                //write_multi_read_bedGraph_for_a_chromosome(peakIdx->get_chrom(i),pos_treat_ctrl_multi_pair, bedGraph_treat_f,bedGraph_ctrl_f);
+
                 write_multi_read_bedGraph_for_a_chromosome(peakIdx->get_chrom(i),pos_treat_ctrl_multi_pair, options.data_outdir, project_name);
                 // info("after write bedgraph");
                 
@@ -701,8 +739,46 @@ void filter_peaks(std::map<int, peak_align_t> peak_multiAlign_map,
                 
                 summit_pscore = -1.0 * log10_poisson_cdf(int(summit_pileup+0.5),roundTop((ctrl_expect+0.5),5),0);
                 //info("summit_pscore = " + std::to_string(summit_pscore));
-                ROUT << peakIdx->get_chrom(i) << "\t" << peak_start << "\t" << peak_end << "\t" << ip_tag << "\t" << input_tag << "\t" << summit_pileup <<
-                "\t" << fe << "\t" << summit_pscore << "\n";
+                
+                if (p_chrom == peakIdx->get_chrom(i)){//check overlap
+                
+                    if (peak_start < p_end && peak_start > p_start ) //overlap with previous peak
+                    {
+                        p_start = std::min(p_start,peak_start);
+                        p_end = std::max(p_end,peak_end);
+                        p_ip_tag = p_ip_tag + ip_tag;
+                        p_input_tag = p_input_tag + input_tag;
+                        p_summit_pileup = p_summit_pileup + summit_pileup;
+                        p_fe = std::max(fe,p_fe);
+                        p_summit_pscore = std::max(summit_pscore,p_summit_pscore);
+                        
+                    }
+                    else {
+                        ROUT << p_chrom << "\t" << p_start << "\t" << p_end << "\t" << p_ip_tag << "\t" << p_input_tag << "\t" << p_summit_pileup <<"\t" << p_fe << "\t" << p_summit_pscore << "\n";
+                        
+                        p_chrom = peakIdx->get_chrom(i);
+                        p_start = peak_start;
+                        p_end = peak_end;
+                        p_ip_tag = ip_tag;
+                        p_input_tag = input_tag;
+                        p_summit_pileup = summit_pileup;
+                        p_summit_pscore = summit_pscore;
+                    }
+                }
+                else {
+                    if(p_chrom != "") //first peak
+                    {
+                        ROUT << p_chrom << "\t" << p_start << "\t" << p_end << "\t" << p_ip_tag << "\t" << p_input_tag << "\t" << p_summit_pileup <<"\t" << p_fe << "\t" << p_summit_pscore << "\n";
+                    }
+                        p_chrom = peakIdx->get_chrom(i);
+                        p_start = peak_start;
+                        p_end = peak_end;
+                        p_ip_tag = ip_tag;
+                        p_input_tag = input_tag;
+                        p_summit_pileup = summit_pileup;
+                        p_summit_pscore = summit_pscore;
+                    
+                }
                 
             }
             
@@ -755,6 +831,7 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
     }
     //Candidate_Peaks peakIdx(peakbed);
     
+    
     for(int i =0; i< peakIdx->get_numofpeaks() ; i++ )
     {
         IP_peakReads.push_back(0.0);
@@ -763,7 +840,7 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
         ctrl_peak_reads_Prime.push_back(0.0);
         peaks_with_multiReads.push_back(0);
     }
-    
+    info("done peak read arrays...");
     //parse IP /input files for multi-reads
     //IP_peakReads_ptr = &IP_peakReads;
     
@@ -805,11 +882,10 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
             peak_align_t pa;
             pa.treat_multi_align_list.push_back(k);
             peak_multiAlign_map.insert(std::pair<int,peak_align_t>(pid,pa));
-            
         }
     }
     
-    //debug("after prepare EM structure numItr = " + std::to_string(options.numItr) );
+    debug("after prepare EM structure numItr = " + std::to_string(options.numItr) );
     
     if (options.numItr == 0 ) { // eqauly distribute multi-alignment
         
@@ -820,7 +896,7 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
     else {
     EMestimate_read(multiAlgn_To_multiRead,multiAlgn_To_peakID,treat_multiAlgn_weight,IP_peakReads,peak_reads_Prime,options.numItr,peakIdx->peak_length);
         
-        //debug("after EMestimate_read");
+        debug("after EMestimate_read");
     }
 
     int multiAlgn_first_idx = 0;
@@ -837,7 +913,7 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
         multiAlgn_first_idx = multiAlgn_To_multiRead[i];
     }
     
-    //info("Reding Input alignment file ..." ;
+    info("Reding Input alignment file ...") ;
     //parse input file
     multi_read_mapTo_pids->clear();
     std::vector<double> ctrl_multiAlgn_weight;
@@ -850,7 +926,7 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
     //read in control sample
     read_distribution(control, options.cfile,peakIdx,options,&Input_peakReads,multi_read_mapTo_pids,ctrl_peak_uniqReads_startPos);
     
-    //debug("after control read distribution");
+    debug("after control read distribution");
     
     //prepare EM structure for control sample
     prepare_EM_structure(peakIdx, Input_peakReads, multi_read_mapTo_pids, multiAlgn_To_multiRead, ctrl_multiAlgn_weight, multiAlgn_To_peakID,ctrl_multiAlgn_start);
@@ -860,7 +936,7 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
     ctrl_multiAlgn_weight.clear();
     EqualWeight_reads(multiAlgn_To_multiRead, Input_peakReads, ctrl_peak_reads_Prime, multiAlgn_To_peakID,ctrl_multiAlgn_weight);
     
-    //info("after ctrl sample equal weighting");
+    info("after ctrl sample equal weighting");
     
     //save control sample multiAlignments for each peak
     //info("before filter peaks");
@@ -884,86 +960,17 @@ int run_EM_TEpeaks(opt_t options, ShortRead * treat, ShortRead * control,std::st
  filter_peaks(peak_multiAlign_map,treat_peak_uniqReads_startPos,ctrl_peak_uniqReads_startPos,peaks_with_multiReads,peakIdx, peak_reads_Prime, ctrl_peak_reads_Prime, treat_multiAlgn_weight, treat_multiAlgn_start, ctrl_multiAlgn_start,ctrl_multiAlgn_weight,options);
     
     
-
-    
     //wirte bedgraph
     
-    
+    info("after filter peaks");
     delete peakIdx;
     delete multi_read_mapTo_pids;
     delete treat_peak_uniqReads_startPos;
     delete ctrl_peak_uniqReads_startPos;
 
     //write_filtered_peaks(peakIdx,data_outdir,project_name);
-   
    // std::cout << "INFO  @ " << cur_time << "\tDone." << std::endl;
     
     return 1;
 }
-
-/*
-int main() {
- 
-     int numItr = 0;
-    // std::string peakbed = "test_peak.bed0";
-    char out_dir[100] = "./";
-    char tfile[100] = "test_ip.bam";
-    char input[100] = "test_input.bam";
-    char peakbed[100] = "test_peak.bed0";
-    double sf_t = 1.0;
-    double sf_c = 1.0;
-    int shiftsize = 50;
-    bool wig = false;
-    char prj_name[10] = "test";
-    double pvalCutoff = 1e-5;
-    int thread_num = 1;
-    char format[10] = "BAM";
-    
-     Candidate_Peaks * peakIdx = new Candidate_Peaks(peakbed);
-     
-    std::vector<double> peak_reads = {12,16,10};
-    std::vector<double> peak_reads_Prime = {0,0,0};
-    std::vector<double> Input_peakReads = {5,4,3};
-     
-    
-    std::vector<double> multiAlgn_weight;
-    std::vector<double> multiAlgn_final_weight;
-    std::vector<int> multiAlgn_To_multiRead ;
-    std::vector<int> multiAlgn_To_peakdID;
-    
-    std::map<int,std::vector<int> > multi_read_mapTo_pids ;
-    
-    multi_read_mapTo_pids.insert(std::pair<int,std::vector<int> > (0,{0,1}));
-    multi_read_mapTo_pids.insert(std::pair<int,std::vector<int> > (1,{1,2}));
-    
-    prepare_EM_structure(peakIdx,peak_reads, multi_read_mapTo_pids, multiAlgn_To_multiRead, multiAlgn_weight, multiAlgn_To_peakdID);
-    
-    EqualWeight_reads(multiAlgn_To_multiRead, peak_reads, peak_reads_Prime, multiAlgn_To_peakdID);
-    
-    for (size_t i = 0; i < multiAlgn_To_multiRead.size(); i++) {
-        std::cout << "multiAlgn to multireads " << multiAlgn_To_multiRead[i] << std::endl;
-    }
-    for (size_t i = 0; i < multiAlgn_To_peakdID.size(); i++) {
-        std::cout << "multiAlgn_To_peakdID " << multiAlgn_To_peakdID[i] << std::endl;
-    }
-    for (size_t i = 0; i < multiAlgn_weight.size(); i++) {
-        std::cout << "multiAlgn_weight " << multiAlgn_weight[i] << std::endl;
-    }
-    
-    for (size_t i =0; i < peak_reads_Prime.size(); i++) {
-        std::cout << peakIdx->get_chrom(i) << "\t" << peakIdx->get_start(i) << "\t" << peakIdx->get_end(i) << "\t" << peak_reads_Prime[i] << std::endl;
-    }
- 
-     //filter_peaks(peakIdx, IP_peakReads, Input_peakReads, 1.0, 1.0,1e-5,"./","test");
-     
-     //delete peakIdx;
-    
-     
- //std::vector<int> effLengths;
- 
-     run_EM_TEpeaks_BAM(out_dir,tfile,input,peakbed, sf_t, sf_c, shiftsize, wig, prj_name, pvalCutoff, thread_num);
-  
- 
- 
- }*/
 

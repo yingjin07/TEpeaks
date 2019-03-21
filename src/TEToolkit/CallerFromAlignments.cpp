@@ -165,7 +165,7 @@ double CallerFromAlignments::get_pscore ( int observed, double expectation )
     return score;
 }
 
-CallerFromAlignments::CallerFromAlignments(ShortRead * treat, ShortRead * ctrl,std::vector<int> ctrl_d_s,
+CallerFromAlignments::CallerFromAlignments(std::vector<std::string> genome_chromlist,ShortRead * treat, ShortRead * ctrl,std::vector<int> ctrl_d_s,
                                            std::vector<double> ctrl_scaling_factor_s,
                                            int d ,
                                            double treat_scaling_factor ,
@@ -260,10 +260,14 @@ CallerFromAlignments::CallerFromAlignments(ShortRead * treat, ShortRead * ctrl,s
         if (std::find(chr2.begin(), chr2.end(), ch) != chr2.end() )
         {
             this->chromosomes.push_back(ch);
-            if(ch.length() < 6)
-            {
+            if (std::find(genome_chromlist.begin(),genome_chromlist.end(),ch) != genome_chromlist.end()) {
                 this->canoChromlist.push_back(ch);
             }
+            
+           // if(ch.length() < 6)
+           // {
+           //     this->canoChromlist.push_back(ch);
+           // }
         }
     }
 
@@ -980,7 +984,7 @@ void CallerFromAlignments::call_peaks ( PeakIO *peaks, call_peak_options_t copts
     std::vector<PeakIO *> peaks_list;
     
     //each thread is assigned a PeakIO object
-    for (int i=0; i < threads_to_use; i++)
+    for (int i=0; i < copts.threads_to_use; i++)
     {
         peaks_list.push_back(new PeakIO());
     }
@@ -990,21 +994,35 @@ void CallerFromAlignments::call_peaks ( PeakIO *peaks, call_peak_options_t copts
     //int total_num_chroms = chromosomes.size();
     int total_num_chroms = canoChromlist.size();
     
-    int chrom_num_per_thread = total_num_chroms/threads_to_use;
+    info("total number of chroms " + std::to_string(total_num_chroms));
+    int chrom_num_per_thread = total_num_chroms/copts.threads_to_use;
 
     //auto start = std::chrono::high_resolution_clock::now();
+    int leftOver_num_chroms = total_num_chroms - copts.threads_to_use * chrom_num_per_thread;
     
-    for (int k =0; k < threads_to_use; k++) {
+    for (int k =0; k < leftOver_num_chroms; k ++) //assign chroms to the first threads with (chrom_num_per_thread + 1) chroms
+    {
         std::vector<std::string> chromlist;
-        int num_chroms =chrom_num_per_thread;
-        
-        if ((k + 1)*chrom_num_per_thread < total_num_chroms && (k+2) * chrom_num_per_thread > total_num_chroms)
-            num_chroms = total_num_chroms - k * chrom_num_per_thread;
+        int num_chroms =chrom_num_per_thread + 1;
         
         info("num_chroms per thread " + std::to_string(num_chroms));
         
         for (int i= 0; i < num_chroms; i++) {
-            chromlist.push_back(canoChromlist[i + k*chrom_num_per_thread]);
+            chromlist.push_back(canoChromlist[i + k * num_chroms]);
+        }
+        
+        t.push_back(new std::thread(&CallerFromAlignments::__chromlist_call_peak_using_certain_criteria,this,chromlist,peaks_list[k],copts));
+    }
+    
+
+    for (int k = leftOver_num_chroms; k < copts.threads_to_use; k++) {
+        std::vector<std::string> chromlist;
+        int num_chroms =chrom_num_per_thread;
+        
+        info("num_chroms per thread " + std::to_string(num_chroms));
+        
+        for (int i= 0; i < num_chroms; i++) {
+            chromlist.push_back(canoChromlist[i + leftOver_num_chroms + k*chrom_num_per_thread]);
         }
         
         t.push_back(new std::thread(&CallerFromAlignments::__chromlist_call_peak_using_certain_criteria,this,chromlist,peaks_list[k],copts));
@@ -1013,18 +1031,18 @@ void CallerFromAlignments::call_peaks ( PeakIO *peaks, call_peak_options_t copts
             break;
         }
     }
-    //info("before threads join");
-    for (int k =0; k < threads_to_use; k++) {
+    info("before threads join");
+    for (int k =0; k < copts.threads_to_use; k++) {
         t[k]->join();
     }
     info("after threads join");
     //merge results
     merge_peaklist(peaks,peaks_list,copts.uniqOnly);
     
-    //info("after merge peaks");
+    info("after merge peaks");
     //clean up
     
-    for (int i = 0; i < threads_to_use; i++)
+    for (int i = 0; i < copts.threads_to_use; i++)
     {
         delete t[i];
         delete peaks_list[i];

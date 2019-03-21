@@ -105,11 +105,12 @@ struct opt_t
     std::string peakNarrowPeak;
     bool trackline;
     std::string summitbed;
+    std::vector<std::string> chromlist;
     
     opt_t() {
         verbose=false;
         threadNum=1;
-        numItr=0;
+        numItr=10;
         pileup = 20; //minium pileup required for peaks with multi-reads
         fe = 3; //minium fold enrichment for peaks with multi-reads
         
@@ -118,19 +119,20 @@ struct opt_t
         tfile="";
         cfile="";
         format ="BAM";
+        bandwidth = 300;
         
         species="hs";
-        onauto=true;
+        onauto=false;
         
         tolarge=false;
         wig=true;
         PE_mode=false;
-        gsize=0;
+        gsize= HG19;
         keepdupNum=0;
         
         project_name="NONAME";
         keepDuplicates="1";
-        fragsize=0;
+        fragsize=200;
         shift=0;
         
         pval=0.00001;

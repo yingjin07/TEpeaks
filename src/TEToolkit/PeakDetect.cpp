@@ -204,7 +204,7 @@ void PeakDetect::__call_peaks_w_control (bool uniqOnly)
     info("lambda_bg " + std::to_string(lambda_bg) + " treat_sum = " + std::to_string(treat_sum));
     std::string bdg_prefix = opt->data_outdir + "/" + opt->project_name;
     
-      CallerFromAlignments  scorecalculator( treat, control,ctrl_d_s,ctrl_scale_s,
+      CallerFromAlignments  scorecalculator( opt->chromlist, treat, control,ctrl_d_s,ctrl_scale_s,
                                                 d,
                                                 treat_scale,
                                             
@@ -241,22 +241,14 @@ void PeakDetect::__call_peaks_w_control (bool uniqOnly)
         cutoff_list.push_back(-1.0*log10(opt->fdr));
         
         //}
-        
     }
     else{
-       /* if (opt->broad){
-            info("#3 Call broad peaks with given level1 -log10pvalue cutoff and level2: %.5f, %.5f..." % (opt->log_pvalue,opt->log_broadcutoff) );
-                peaks = scorecalculator.call_broadpeaks(['p',], lvl1_cutoff_s=[opt->log_pvalue,],lvl2_cutoff_s=[opt->log_broadcutoff,],min_length=d,
-                                                        lvl1_max_gap=opt->tsize,lvl2_max_gap=d*4,
-                                                        auto_cutoff=opt->cutoff_analysis );
-        }
-        else{ */
+
         info("#4 Call peaks with given p-value cutoff: " + std::to_string(opt->pval));
         
         scoring_function_symbols.push_back("p");
         cutoff_list.push_back(-1.0 * log10(opt->pval));
-        
-       // }
+
     }
     
     //debug("in PeakDetect call peaks");
@@ -270,12 +262,137 @@ void PeakDetect::__call_peaks_w_control (bool uniqOnly)
     call_peak_opts.uniqOnly = uniqOnly;
     call_peak_opts.scoring_function_symbols = scoring_function_symbols;
     call_peak_opts.score_cutoff_s = cutoff_list;
+    call_peak_opts.threads_to_use = opt->threadNum;
     
     scorecalculator.call_peaks(this->peaks,call_peak_opts);
     
-                                            //call_summits=opt->call_summits,
-                                            //auto_cutoff=opt->cutoff_analysis );
+                                            
         //scorecalculator.destroy();
     
 }
-
+/*
+void PeakDetect::__call_peaks_wo_control (bool uniqOnly)
+{
+    /* """To call peaks without control data.
+     A peak info type is a: dictionary
+     
+     key value: chromosome
+     
+     items: (peak start,peak end, peak length, peak summit, peak
+     height, number of tags in peak region, peak pvalue, peak
+     fold_enrichment) <-- tuple type
+     
+     While calculating pvalue:
+     
+     First, t and c will be adjusted by the ratio between total
+     reads in treatment and total reads in control, depending on
+     --to-small option.
+     
+     Then, t and c will be multiplied by the smallest peak size --
+     d.
+     
+     Finally, a poisson CDF is applied to calculate one-side pvalue
+     for enrichment.
+     """ */
+/*
+    double lambda_bg, effective_depth_in_million;
+    
+    double d;
+    
+    std::vector<double> ctrl_scale_s, ctrl_d_s;
+    
+    if (this.PE_MODE){
+        d = 0;
+    }
+    else{
+        d = this.d;
+    }
+    int treat_length = treat->length;
+    int treat_total = treat->get_total();
+    
+    effective_depth_in_million = treat_total / 1000000.0;
+    
+    // global lambda
+    if (this.PE_MODE){
+        //    # this an estimator, we should maybe test it for accuracy?
+        lambda_bg = treat_length / opt->gsize;
+    }
+    else{
+        lambda_bg = 1.0 * d * treat_total / opt->gsize;
+    }
+    treat_scale = 1.0;
+    
+    // slocal and d-size local bias are not calculated!
+    // nothing done here. should this match w control??
+    
+    if (not opt->nolambda){
+        if (PE_MODE){
+            ctrl_scale_s.push_back(1.0 * treat_length/ (opt->largelocal * treat_total * 2));
+        }
+        else {
+            ctrl_scale_s.push_back(1.0 * d / opt->largelocal);
+        }
+        ctrl_d_s.push_back(opt->largelocal);
+    }
+    //calculate peak scores, do each chromosome separately (can be parallellized)
+    CallerFromAlignments scorecalculator ( treat, NULL,
+                                          d = d, ctrl_d_s = ctrl_d_s,
+                                          treat_scaling_factor = 1.0,
+                                          ctrl_scaling_factor_s = ctrl_scale_s,
+                                          pseudocount = 1.0,
+                                          end_shift = opt->shift,
+                                          lambda_bg = lambda_bg,
+                                          no_lambda_flag = false,
+                                          save_bedGraph = opt->store_bdg,
+                                          bedGraph_filename_prefix = opt->name,
+                                          bedGraph_treat_filename = opt->bdg_treat,
+                                          bedGraph_control_filename = opt->bdg_control,
+                                          cutoff_analysis_filename = opt->cutoff_analysis_file,
+                                          save_SPMR = opt->do_SPMR
+                                          );
+    
+    //if opt->trackline: scorecalculator.enable_trackline()
+    // call peaks
+    if(opt->call_summits){
+        info("#3 Going to call summits inside each peak ...");
+    }
+    
+    std::vector<std::string> scoring_function_symbols;
+    std::vector<double> cutoff_list;
+    
+    if (opt->log_pvalue){
+        /* if (opt->broad){
+         info("#3 Call broad peaks with given level1 -log10pvalue cutoff and level2: %.5f, %.5f..." % (opt->log_pvalue,opt->log_broadcutoff) );
+         peaks = scorecalculator.call_broadpeaks(['p',], lvl1_cutoff_s=[opt->log_pvalue,],lvl2_cutoff_s=[opt->log_broadcutoff,],min_length=d,
+         lvl1_max_gap=opt->tsize,lvl2_max_gap=d*4);
+         }*/
+        //else{
+/*        info("#3 Call peaks with given -log10pvalue cutoff: %.5f ..." % opt->log_pvalue);
+        scoring_function_symbols.push_back("p");
+        cutoff_list.push_back(opt->log_pvalue);
+        //}
+    }
+    
+    
+    if (opt->log_qvalue){
+        /*if (opt->broad){
+         info("#3 Call broad peaks with given level1 -log10qvalue cutoff and level2: %f, %f..." % (opt->log_qvalue,opt->log_broadcutoff) );
+         peaks = scorecalculator.call_broadpeaks(['q',], lvl1_cutoff_s=[opt->log_qvalue,],lvl2_cutoff_s=[opt->log_broadcutoff,],min_length=d,
+         lvl1_max_gap=opt->tsize,lvl2_max_gap=d*4);
+         }
+         else{*/
+        
+        //}
+/*        scoring_function_symbols.push_back("q");
+        cutoff_list.push_back(opt->log_qvalue);
+        
+    }
+    scorecalculator.call_peaks(peaks, scoring_function_symbols, cutoff_list,
+                               min_length=d,
+                               max_gap=opt->tsize,
+                               call_summits=opt->call_summits,
+                               auto_cutoff=opt->cutoff_analysis );
+    
+    
+}
+*/

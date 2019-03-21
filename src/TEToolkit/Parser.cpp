@@ -1089,7 +1089,7 @@ void parse_bam(ShortRead * track,std::string inputFile,int shiftsize,int threadN
     
     std::string format = "BAM";
     
-    
+    info("start read bam file ...");
     
     fp_in = sam_open(inputFile.c_str(), "rb");
     

@@ -163,7 +163,6 @@ int run_narrow_TEpeaks_all(opt_t &options)
     }
     
     options.CandidatePeakfile = options.data_outdir + "/" + options.project_name + "_candidatePeaks.txt";
-    //options.CandidatePeakfile = options.project_name + "_candidatePeaks.txt";
     
     std::string tag = "tag" ;
     
@@ -263,6 +262,11 @@ int run_narrow_TEpeaks_all(opt_t &options)
     //int d,  scanwindow;
     std::string joined_alt_d = "";
     
+    //sort reads by position for each chromosome
+    treat->sort();
+    control->sort();
+    
+    
     if(!options.onauto) {
         info("#3 Skipped... building peak model to estimate fragment length.");
         
@@ -334,40 +338,6 @@ int run_narrow_TEpeaks_all(opt_t &options)
         c1 = c1 * 2;
     }
     
-
-/*        if(options.downsample){
-            // use random sampling to balance treatment and control
-            info("#4 User prefers to use random sampling instead of linear scaling.");
-            if (t1 > c1){
-                info("#4 TEpeaks is random sampling treatment " +  tag);
-                if (options.seed < 0){
-                    warn("#4 Your results may not be reproducible due to the random sampling!");
-                }
-                else {
-                    info("#4 Random seed " + lexical_cast<std::string>(options.seed)+" is used.");
-                }
-                
-                treat->sample_num(c1, options.seed);
-                //consider PE reads as SE reads
-                info("#4 " + std::to_string(treat->total) + " tags  from treatment are kept");
-            }
-            else {
-                if( c1 > t1) {
-                    info("#4 random sampling control " + tag);
-                    if (options.seed < 0){
-                        warn("#4 Your results may not be reproducible due to the random sampling!");
-                    }
-                    else {
-                        info("#4 Random seed " + lexical_cast<std::string>(options.seed) + " is used." );
-                    }
-                    control->sample_num(t1, options.seed);
-                    
-                    info("#4 " + lexical_cast<std::string>(control->total) + " " + tag +  " from control are kept");
-                }
-            }
-            //set options.tocontrol although it would;t matter now
-            options.tocontrol = false;
-        }*/
       //  else {
             if (options.tolarge){
                 if (t1 > c1)
@@ -396,9 +366,7 @@ int run_narrow_TEpeaks_all(opt_t &options)
             }
      //   }
     
-    //sort reads by position for each chromosome
-    treat->sort();
-    control->sort();
+    
     
 
     if (options.shift > 0){
@@ -447,6 +415,7 @@ int run_narrow_TEpeaks_all(opt_t &options)
     //FILE *ofhd = fopen( peak_fname, "w" );
     
     peakdetect.peaks->write_candidate_to_bed(options.CandidatePeakfile);
+    //peakdetect.peaks->write_candidate_to_bed();
     
     treat->clean_m();
     control->clean_m();
@@ -455,6 +424,7 @@ int run_narrow_TEpeaks_all(opt_t &options)
     run_EM_TEpeaks(options,treat,control,options.CandidatePeakfile);
            // filter out low FE peaks
     //peakdetect.peaks.filter_fc( fc_low = options.fecutoff );
+    info("#4 after Call peaks for repetitive regions...");
     
     delete treat;
     delete control;

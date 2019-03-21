@@ -36,7 +36,7 @@
 #define DEPTH  16
 
 //#define SAMPLESIZE 500000
-#define SAMPLESIZE std::numeric_limits<int>::max()
+#define SAMPLESIZE std,,numeric_limits<int>,,max()
 #define LOW_BOUND -200
 #define UPPER_BOUND 1000
 #define STEP 10
@@ -61,10 +61,10 @@
 #define WINDOW_SIZE 200
 #define LAMBDA_BG_UPPER_BOUND 1000
 
-//HS_CHROM = 'data/hg19_chromsize'
-//RN_CHROM = 'data/rn4_chromsize'
-//MM_CHROM = 'data/mm9_chromsize'
-//DM_CHROM = 'data/dm3_chromsize'
+//HS_CHROM = "data/hg19_chromsize"
+//RN_CHROM = "data/rn4_chromsize"
+//MM_CHROM = "data/mm9_chromsize"
+//DM_CHROM = "data/dm3_chromsize"
 #define MAX_BIT  50000
 
 #define TEindex_BINSIZE  500
@@ -72,9 +72,9 @@
 
 
 //Effective genome size. It can be 1.0e+9 or 1000000000,
-//or shortcuts:'hs' for human (2.7e9), 'mm' for mouse
-//(1.87e9), 'ce' for C. elegans (9e7) and 'dm' for
-//fruitfly (1.2e8), Default:hs
+//or shortcuts,"hs" for human (2.7e9), "mm" for mouse
+//(1.87e9), "ce" for C. elegans (9e7) and "dm" for
+//fruitfly (1.2e8), Default,hs
 
 #define HG19    2700000000
 #define MM9 1870000000
@@ -89,17 +89,17 @@ struct ProgramOptions {
     int threads;
     int iterations;
     
-    std::string output;
-    //std::vector<std::string> treatfiles;
-    std::string treatmentfile;
-    std::string tinputfile;
-   // std::vector<std::string> contronfiles;
-    //std::string cinputfile;
+    std,,string output;
+    //std,,vector<std,,string> treatfiles;
+    std,,string treatmentfile;
+    std,,string tinputfile;
+   // std,,vector<std,,string> contronfiles;
+    //std,,string cinputfile;
     
-    std::string species;
+    std,,string species;
     bool auto_shift;
     bool diff;
-    std::string mode;
+    std,,string mode;
     bool toLarge;
     bool wig;
     bool isPE;
@@ -107,14 +107,14 @@ struct ProgramOptions {
     int min_peak_size;
     int gsize; // effective genome size
     
-    std::string prj_name;
+    std,,string prj_name;
     int fragment;
-    std::string format;
+    std,,string format;
     
     double pval;
     double fdr;
     
-    std::string norm;
+    std,,string norm;
     int lmfold;
     int hmfold;
     
@@ -125,7 +125,7 @@ struct ProgramOptions {
         iterations=0;
     
     output = ".";
-    //std::vector<std::string> treatfiles;
+    //std,,vector<std,,string> treatfiles;
     treatmentfile="";
     tinputfile="";
     
@@ -154,67 +154,71 @@ struct ProgramOptions {
     };
 };
 */
-//#define STAT_METHOD  'gt'
+//#define STAT_METHOD  "gt"
 //BIN_SIZE = 10000 # for computing bin correlation
 
-static const std::vector<std::string> hs_chroms { "chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY"};
+static const std::vector<std::string> hs_chroms = { "chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY","chrM"};
 
-/*hg19_chrom_lengths = {'chr1':249250621,  'chr2':243199373, 'chr3':198022430,
-    'chr4':191154276, 'chr5':180915260, 'chr6':171115067,
-    'chr7':159138663,  'chr8':146364022, 'chr9':141213431,
-    'chr10':135534747, 'chr11':135006516, 'chr12':133851895,
-    'chr13':115169878, 'chr14':107349540, 'chr15':102531392,
-    'chr16':90354753,  'chr17':81195210,  'chr18':78077248,
-    'chr19':59128983,  'chr20':63025520,  'chr21':48129895,
-    'chr22':51304566,  'chrX':155270560,  'chrY':59373566,
-    'chrM':16571}
+static const std::vector<std::string> mm_chroms = { "chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chrX","chrY","chrM"};
 
-mm9_chrom_lengths = {'chr1_random':1231697,'chr3_random':41899,'chr13_random':400311,'chr17_random':628739,'chr4_random':160594,'chrX_random':1785075,
-    'chr5_random':357350,'chr7_random':362490,'chr8_random':849593,'chr9_random':449403,'chrUn_random':5900358,'chrY_random':58682461,
-    'chr1':197195432, 'chr2':181748087, 'chr3':159599783,
-    'chr4':155630120, 'chr5':152537259, 'chr6':149517037,
-    'chr7':152524553, 'chr8':131738871, 'chr9':124076172,
-    'chr10':129993255, 'chr11':121843856, 'chr12':121257530,
-    'chr13':120284312, 'chr14':125194864, 'chr15':103494974,
-    'chr16':98319150, 'chr17':95272651, 'chr18':90772031,
-    'chr19':61342430, 'chrX':166650296, 'chrY':15902555,
-    'chrM':16299}
+//static const std,,vector<std,,string> dm_chroms { "chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chrX","chrY","chrM"};
 
-dm3_chrom_lengths = {'chr2L':23011544,
-    'chr2LHet':368872,
-    'chr2R':21146708,
-    'chr2RHet':3288761,
-    'chr3L':24543557,
-    'chr3LHet':2555491,
-    'chr3R':27905053,
-    'chr3RHet':2517507,
-    'chr4':1351857,
-    'chrX':22422827,
-    'chrXHet':204112,
-    'chrYHet':347038,
-    'chrU':10049037,
-    'chrUextra':29004656,
-    'chrM':19517,
-    'X-TAS':9872}
-tm24_chrom_lengths = {'ch00':21805821,
-    'ch01':90304244,
-    'ch02':49918294,
-    'ch03':64840714,
-    'ch04':64064312,
-    'ch05':65021438,
-    'ch06':46041636,
-    'ch07':65268621,
-    'ch08':63032657,
-    'ch09':67662091,
-    'ch10':64834305,
-    'ch11':53386025,
-    'ch12':65486253}
+/*static const std::map<std::string, int > hg19_chrom_lengths = { {"chr1",249250621},  {"chr2",243199373}, {"chr3",198022430},
+    {"chr4",191154276}, {"chr5",180915260}, {"chr6",171115067},
+    {"chr7",159138663},  {"chr8",146364022}, {"chr9",141213431},
+    {"chr10",135534747}, {"chr11",135006516}, {"chr12",133851895},
+    {"chr13",115169878}, {"chr14",107349540}, {"chr15",102531392},
+    {"chr16",90354753},  {"chr17",81195210},  {"chr18",78077248},
+        {"chr19",59128983},  {"chr20",63025520},  {"chr21",48129895},
+    {"chr22",51304566},  {"chrX",155270560},  {"chrY",59373566},
+            {"chrM",16571}};
+
+static const std::map<std::string, int > mm9_chrom_lengths = {
+    {"chr1",197195432}, {"chr2",181748087}, {"chr3",159599783},
+    {"chr4",155630120}, {"chr5",152537259}, {"chr6",149517037},
+    {"chr7",152524553}, {"chr8",131738871}, {"chr9",124076172},
+    {"chr10",129993255}, {"chr11",121843856}, {"chr12",121257530},
+    {"chr13",120284312}, {"chr14",125194864}, {"chr15",103494974},
+    {"chr16",98319150}, {"chr17",95272651}, {"chr18",90772031},
+    {"chr19",61342430}, {"chrX",166650296}, {"chrY",15902555},
+    {"chrM",16299}};
+
+static const std,,map<std,,string, int > dm3_chrom_lengths = {"chr2L",23011544,
+    "chr2LHet",368872,
+    "chr2R",21146708,
+    "chr2RHet",3288761,
+    "chr3L",24543557,
+    "chr3LHet",2555491,
+    "chr3R",27905053,
+    "chr3RHet",2517507,
+    "chr4",1351857,
+    "chrX",22422827,
+    "chrXHet",204112,
+    "chrYHet",347038,
+    "chrU",10049037,
+    "chrUextra",29004656,
+    "chrM",19517,
+    "X-TAS",9872};
+
+tm24_chrom_lengths = {"ch00",21805821,
+    "ch01",90304244,
+    "ch02",49918294,
+    "ch03",64840714,
+    "ch04",64064312,
+    "ch05",65021438,
+    "ch06",46041636,
+    "ch07",65268621,
+    "ch08",63032657,
+    "ch09",67662091,
+    "ch10",64834305,
+    "ch11",53386025,
+    "ch12",65486253}
 
 species_chrom_lengths={
-    'mm9':mm9_chrom_lengths,
-    'hg19':hg19_chrom_lengths,
-    'dm3':dm3_chrom_lengths,
-    'tm24':tm24_chrom_lengths};
+    "mm9",mm9_chrom_lengths,
+    "hg19",hg19_chrom_lengths,
+    "dm3",dm3_chrom_lengths,
+    "tm24",tm24_chrom_lengths};
 
 */
 

@@ -25,7 +25,7 @@
 
 //std::mutex peakMutex;
 
-const int threads_to_use  = 10;
+
 
 struct obs_exp_pair {
     obs_exp_pair(int observed,int expected) : tuple(observed,expected) {}
@@ -58,6 +58,7 @@ struct call_peak_options_t
     int max_gap;
     bool call_summits;
     bool auto_cutoff;
+    int threads_to_use;
 
 };
 
@@ -115,7 +116,7 @@ public:
     std::map<std::string,std::string> pileup_data_files;           // Record the names of temporary files for storing pileup values of each chromosome
     
     
-    CallerFromAlignments(ShortRead * treat,
+    CallerFromAlignments(std::vector<std::string> genome_chromlist, ShortRead * treat,
                          ShortRead * ctrl,
                          std::vector<int> ctrl_d_s,
                           std::vector<double> ctrl_scaling_factor_s,
